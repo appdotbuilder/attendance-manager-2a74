@@ -1,14 +1,26 @@
 
+import { db } from '../db';
+import { teachersTable } from '../db/schema';
 import { type CreateTeacherInput, type Teacher } from '../schema';
 
-export async function createTeacher(input: CreateTeacherInput): Promise<Teacher> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new teacher account with hashed password.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createTeacher = async (input: CreateTeacherInput): Promise<Teacher> => {
+  try {
+    // Hash the password (simple hash for demo - in production use bcrypt or similar)
+    const passwordHash = await Bun.password.hash(input.password);
+
+    // Insert teacher record
+    const result = await db.insert(teachersTable)
+      .values({
         name: input.name,
         email: input.email,
-        password_hash: 'hashed_password_placeholder', // Should hash the password in real implementation
-        created_at: new Date()
-    } as Teacher);
-}
+        password_hash: passwordHash
+      })
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Teacher creation failed:', error);
+    throw error;
+  }
+};
